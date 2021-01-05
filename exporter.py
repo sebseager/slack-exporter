@@ -198,7 +198,11 @@ def parse_channel_history(msgs, users, check_thread=False):
                 name_from_uid(u, users) for u in x['users'])) for x in rxns)
         if 'files' in msg:
             files = msg['files']
-            entry += "\nFiles:\n" + '\n'.join(' - %s, %s' % (f['name'], f['url_private_download']) for f in files)
+            deleted = [f for f in files if 'name' not in f or 'url_private_download' not in f]
+            ok_files = [f for f in files if f not in deleted]
+            entry += "\nFiles:\n"
+            entry += '\n'.join(' - [%s] %s, %s' % (f['id'], f['name'], f['url_private_download']) for f in ok_files)
+            entry += '\n'.join(' - [%s] [deleted, oversize, or unavailable file]' % f['id'] for f in deleted)
 
         entry += '\n\n%s\n\n' % ('*' * 24)
 
