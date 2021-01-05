@@ -143,7 +143,14 @@ def name_from_ch_id(channel_id, channels):
 def parse_user_list(users):
     result = ''
     for u in users:
-        entry = '[%s] %s (%s), %s' % (u['id'], u['name'], u['real_name'], u['tz'])
+        entry = '[%s]' % u['id']
+        if 'name' in u:
+            entry += ' %s' % u['name']
+        if 'real_name' in u:
+            entry += ' (%s)' % u['real_name']
+        if 'tz' in u:
+            entry += ', %s' % u['tz']
+
         u_type = ''
         if 'is_admin' in u and u['is_admin']:
             u_type += 'admin|'
