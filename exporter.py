@@ -186,7 +186,7 @@ def parse_channel_history(msgs, users, check_thread=False):
         else:
             usr = {'name': '', 'real_name': 'none'}
 
-        timestamp = datetime.fromtimestamp(round(float(msg['ts']))).strftime('%m-%d-%Y %H:%M:%S')
+        timestamp = datetime.fromtimestamp(round(float(msg['ts']))).strftime('%m-%d-%y %H:%M:%S')
         text = msg['text'] if msg['text'].strip() != "" else "[no message content]"
         for u in [x['id'] for x in users]:
             text = str(text).replace('<@%s>' % u, '<@%s> (%s)' % (u, name_from_uid(u, users)))
