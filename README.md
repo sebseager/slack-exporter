@@ -66,3 +66,11 @@ Return to the Slack app you created in [Authentication with Slack](#authenticati
 where, if using ngrok, `[domain]` would be replaced with something like `https://xxxxxxxxxxxx.ngrok.io`.
 
 Navigate back to `OAuth & Permissions` and click `(Re)install to Workspace` to add these slash commands to the workspace.
+
+## Author
+
+[Seb Seager](https://github.com/sebseager)
+
+## License
+
+This software is available under the [GPL](LICENSE).
