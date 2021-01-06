@@ -26,7 +26,13 @@ There are two ways to use `slack-exporter` (detailed below). Both require a Slac
 
 `exporter.py` can create an archive of all conversation history in your workspace which is accessible to your user account.
 
-1. Run the following (replacing the value with the user token you obtained in the [Authentication with Slack](#authentication-with-slack) section above).
+1. Either add 
+
+    ```text
+    SLACK_USER_TOKEN = xoxp-xxxxxxxxxxxxx...
+    ```
+    
+    to a file named `.env` in the same directory as `exporter.py`, or run the following in your shell (replacing the value with the user token you obtained in the [Authentication with Slack](#authentication-with-slack) section above).
 
     ```shell script
     export SLACK_USER_TOKEN=xoxp-xxxxxxxxxxxxx...

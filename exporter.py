@@ -4,9 +4,11 @@ import requests
 import json
 from datetime import datetime
 import argparse
-
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
+env_file = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.isfile(env_file):
+    load_dotenv(env_file)
 
 
 # pagination handling
