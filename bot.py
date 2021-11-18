@@ -113,7 +113,7 @@ def channel_replies(timestamps, channel_id, response_url):
 # Flask routes
 
 
-@app.route("/slack/export-channel", methods=["POST"])
+@app.route("/slack/events/export-channel", methods=["POST"])
 def export_channel():
     data = request.form
 
@@ -168,7 +168,7 @@ def export_channel():
     return Response(), 200
 
 
-@app.route("/slack/export-replies", methods=["POST"])
+@app.route("/slack/events/export-replies", methods=["POST"])
 def export_replies():
     data = request.form
 
@@ -187,7 +187,9 @@ def export_replies():
     ch_hist = channel_history(ch_id, response_url)
     print(ch_hist)
     ch_replies = channel_replies(
-        [x["ts"] for x in ch_hist if "reply_count" in x], ch_id, response_url
+        [x["ts"] for x in ch_hist if "reply_count" in x],
+        ch_id,
+        response_url=response_url,
     )
 
     export_mode = str(command_args).lower()
@@ -244,4 +246,4 @@ def download(filename):
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

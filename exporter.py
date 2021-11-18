@@ -11,22 +11,49 @@ if os.path.isfile(env_file):
     load_dotenv(env_file)
 
 
+# write handling
+
+
+def post_response(response_url, text):
+    requests.post(response_url, json={"text": text})
+
+
+# use this to say anything
+# will print to stdout if no response_url is given
+# or post_response to given url if provided
+def handle_print(text, response_url=None):
+    if response_url is None:
+        print(text)
+    else:
+        post_response(response_url, text)
+
+
 # pagination handling
 
 
-def get_at_cursor(url, params, cursor=None):
+def get_at_cursor(url, params, cursor=None, response_url=None):
     if cursor is not None:
         params["cursor"] = cursor
 
-    r = requests.get(url, params=params)
-    if r.status_code != 200:
-        print("ERROR: %s %s" % (r.status_code, r.reason))
+    # slack api (OAuth 2.0) now requires auth tokens in HTTP Authorization header
+    # instead of passing it as a query parameter
+    try:
+        headers = {"Authorization": "Bearer %s" % os.environ["SLACK_USER_TOKEN"]}
+    except KeyError:
+        handle_print("Missing SLACK_USER_TOKEN in environment variables", response_url)
         sys.exit(1)
+
+    r = requests.get(url, headers=headers, params=params)
+
+    if r.status_code != 200:
+        handle_print("ERROR: %s %s" % (r.status_code, r.reason), response_url)
+        sys.exit(1)
+
     d = r.json()
 
     try:
         if d["ok"] is False:
-            print("I encountered an error: %s" % d)
+            handle_print("I encountered an error: %s" % d, response_url)
             sys.exit(1)
 
         next_cursor = None
@@ -38,16 +65,26 @@ def get_at_cursor(url, params, cursor=None):
         return next_cursor, d
 
     except KeyError as e:
-        print("Something went wrong: %s." % e)
+        handle_print("Something went wrong: %s." % e, response_url)
         return None, []
 
 
-def paginated_get(url, params, combine_key=None):
+def paginated_get(url, params, combine_key=None, response_url=None):
     next_cursor = None
     result = []
     while True:
-        next_cursor, data = get_at_cursor(url, params, cursor=next_cursor)
-        result.extend(data) if combine_key is None else result.extend(data[combine_key])
+        next_cursor, data = get_at_cursor(
+            url, params, cursor=next_cursor, response_url=response_url
+        )
+
+        try:
+            result.extend(data) if combine_key is None else result.extend(
+                data[combine_key]
+            )
+        except KeyError:
+            handle_print("Something went wrong: %s." % e, response_url)
+            sys.exit(1)
+
         if next_cursor is None:
             break
 
@@ -57,44 +94,57 @@ def paginated_get(url, params, combine_key=None):
 # GET requests
 
 
-def channel_list(team_id=None):
+def channel_list(team_id=None, response_url=None):
     params = {
-        "token": os.environ["SLACK_USER_TOKEN"],
+        # "token": os.environ["SLACK_USER_TOKEN"],
         "team_id": team_id,
         "types": "public_channel,private_channel,mpim,im",
         "limit": 200,
     }
 
     return paginated_get(
-        "https://slack.com/api/conversations.list", params, combine_key="channels"
+        "https://slack.com/api/conversations.list",
+        params,
+        combine_key="channels",
+        response_url=response_url,
     )
 
 
-def channel_history(channel_id):
+def channel_history(channel_id, response_url=None):
     params = {
-        "token": os.environ["SLACK_USER_TOKEN"],
+        # "token": os.environ["SLACK_USER_TOKEN"],
         "channel": channel_id,
         "limit": 200,
     }
 
     return paginated_get(
-        "https://slack.com/api/conversations.history", params, combine_key="messages"
+        "https://slack.com/api/conversations.history",
+        params,
+        combine_key="messages",
+        response_url=response_url,
     )
 
 
-def user_list(team_id=None):
-    params = {"token": os.environ["SLACK_USER_TOKEN"], "limit": 200, "team_id": team_id}
+def user_list(team_id=None, response_url=None):
+    params = {
+        # "token": os.environ["SLACK_USER_TOKEN"],
+        "limit": 200,
+        "team_id": team_id,
+    }
 
     return paginated_get(
-        "https://slack.com/api/users.list", params, combine_key="members"
+        "https://slack.com/api/users.list",
+        params,
+        combine_key="members",
+        response_url=response_url,
     )
 
 
-def channel_replies(timestamps, channel_id):
+def channel_replies(timestamps, channel_id, response_url=None):
     replies = []
     for timestamp in timestamps:
         params = {
-            "token": os.environ["SLACK_USER_TOKEN"],
+            # "token": os.environ["SLACK_USER_TOKEN"],
             "channel": channel_id,
             "ts": timestamp,
             "limit": 200,
@@ -104,6 +154,7 @@ def channel_replies(timestamps, channel_id):
                 "https://slack.com/api/conversations.replies",
                 params,
                 combine_key="messages",
+                response_url=response_url,
             )
         )
 

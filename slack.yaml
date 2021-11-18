@@ -1,8 +1,28 @@
 _metadata:
   major_version: 1
+  minor_version: 1
 display_information:
   name: Slack Exporter
   description: Export publicly visible channel data as text or JSON.
+features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: Slack Exporter
+    always_online: true
+  # slash_commands:
+  #   - command: /export-channel
+  #     description: Export the contents of this channel in either text or JSON format
+  #     usage_hint: json|text
+  #     url: https://YOUR_HOST_URL_HERE/slack/export-channel
+  #     should_escape: false
+  #   - command: /export-replies
+  #     description: Export reply threads in either text or JSON format
+  #     usage_hint: json|text
+  #     url: https://YOUR_HOST_URL_HERE/slack/export-replies
+  #     should_escape: false
 oauth_config:
   scopes:
     user:
@@ -15,3 +35,11 @@ oauth_config:
       - im:read
       - im:history
       - users:read
+    bot:
+      - commands
+      - chat:write
+      - chat:write.public
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
