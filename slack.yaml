@@ -1,0 +1,17 @@
+_metadata:
+  major_version: 1
+display_information:
+  name: Slack Exporter
+  description: Export publicly visible channel data as text or JSON.
+oauth_config:
+  scopes:
+    user:
+      - channels:read
+      - channels:history
+      - groups:read
+      - groups:history
+      - mpim:read
+      - mpim:history
+      - im:read
+      - im:history
+      - users:read
