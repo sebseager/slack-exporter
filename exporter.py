@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 import requests
@@ -110,11 +111,13 @@ def channel_list(team_id=None, response_url=None):
     )
 
 
-def channel_history(channel_id, response_url=None):
+def channel_history(channel_id, response_url=None, oldest=None, latest=None):
     params = {
         # "token": os.environ["SLACK_USER_TOKEN"],
         "channel": channel_id,
         "limit": 200,
+        "oldest": oldest,
+        "latest": latest,
     }
 
     return paginated_get(
@@ -345,6 +348,15 @@ if __name__ == "__main__":
         "-c", action="store_true", help="Get history for all accessible conversations"
     )
     parser.add_argument(
+        "--ch", help="Restrict to given Channel ID"
+    )
+    parser.add_argument(
+        "--fr", help="Unix timestamp for earliest message"
+    )
+    parser.add_argument(
+        "--to", help="Unix timestamp for latest message"
+    )
+    parser.add_argument(
         "-r",
         action="store_true",
         help="Get reply threads for all accessible conversations",
@@ -389,6 +401,26 @@ if __name__ == "__main__":
             data_replies = "%s\n%s\n\n%s" % (header_str, sep, data_replies)
         save(data_replies, "channel-replies_%s" % channel_id)
 
+    def save_channel(ch_id, ch_list, users):
+        ts_fr = a.fr
+        ts_to = a.to
+        ch_hist = channel_history(ch_id, oldest=ts_fr, latest=ts_to)
+        if a.json:
+            data_ch = ch_hist
+        else:
+            data_ch = parse_channel_history(ch_hist, users)
+            ch_name, ch_type = name_from_ch_id(ch_id, ch_list)
+            header_str = "%s Name: %s" % (ch_type, ch_name)
+            sep = "=" * 24
+            data_ch = (
+                "Channel ID: %s\n%s\n%s Messages\n%s\n\n"
+                % (ch_id, header_str, len(ch_hist), sep)
+                + data_ch
+            )
+        save(data_ch, "channel_%s" % ch_id)
+        if a.r:
+            save_replies(ch_hist, ch_id, users)
+
     if a.lc:
         data = (
             channel_list()
@@ -400,25 +432,14 @@ if __name__ == "__main__":
         data = user_list() if a.json else parse_user_list(user_list())
         save(data, "user_list")
     if a.c:
+        ch_id = a.ch if a.ch else (os.environ["CHANNEL_ID"] if "CHANNEL_ID" in os.environ else None)
         ch_list = channel_list()
         users = user_list()
-        for ch_id in [x["id"] for x in ch_list]:
-            ch_hist = channel_history(ch_id)
-            if a.json:
-                data_ch = ch_hist
-            else:
-                data_ch = parse_channel_history(ch_hist, users)
-                ch_name, ch_type = name_from_ch_id(ch_id, ch_list)
-                header_str = "%s Name: %s" % (ch_type, ch_name)
-                sep = "=" * 24
-                data_ch = (
-                    "Channel ID: %s\n%s\n%s Messages\n%s\n\n"
-                    % (ch_id, header_str, len(ch_hist), sep)
-                    + data_ch
-                )
-            save(data_ch, "channel_%s" % ch_id)
-            if a.r:
-                save_replies(ch_hist, ch_id, users)
+        if ch_id:
+            save_channel(ch_id, ch_list, users)
+        else:
+            for ch_id in [x["id"] for x in ch_list]:
+                save_channel(ch_id, ch_list, users)
     # elif, since we want to avoid asking for channel_history twice
     elif a.r:
         for ch_id in [x["id"] for x in channel_list()]:
