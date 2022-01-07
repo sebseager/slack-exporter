@@ -458,11 +458,7 @@ if __name__ == "__main__":
         data = user_list() if a.json else parse_user_list(user_list())
         save(data, "user_list")
     if a.c:
-        ch_id = (
-            a.ch
-            if a.ch
-            else (os.environ["CHANNEL_ID"] if "CHANNEL_ID" in os.environ else None)
-        )
+        ch_id = a.ch
         ch_list = channel_list()
         users = user_list()
         if ch_id:
