@@ -116,9 +116,12 @@ def channel_history(channel_id, response_url=None, oldest=None, latest=None):
         # "token": os.environ["SLACK_USER_TOKEN"],
         "channel": channel_id,
         "limit": 200,
-        "oldest": oldest,
-        "latest": latest,
     }
+
+    if oldest is not None:
+        params["oldest"] = oldest
+    if latest is not None:
+        params["latest"] = latest
 
     return paginated_get(
         "https://slack.com/api/conversations.history",
@@ -347,23 +350,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c", action="store_true", help="Get history for all accessible conversations"
     )
+    parser.add_argument("--ch", help="Restrict to given channel ID")
     parser.add_argument(
-        "--ch", help="Restrict to given Channel ID"
+        "--fr",
+        help="Unix timestamp (seconds since Jan. 1, 1970) for earliest message",
+        type=str,
     )
     parser.add_argument(
-        "--fr", help="Unix timestamp for earliest message"
-    )
-    parser.add_argument(
-        "--to", help="Unix timestamp for latest message"
+        "--to",
+        help="Unix timestamp (seconds since Jan. 1, 1970) for latest message",
+        type=str,
     )
     parser.add_argument(
         "-r",
         action="store_true",
         help="Get reply threads for all accessible conversations",
     )
-    a = parser.parse_args()
 
+    a = parser.parse_args()
     ts = str(datetime.strftime(datetime.now(), "%m-%d-%Y_%H%M%S"))
+    sep_str = "*" * 24
 
     def save(data, filename):
         if a.o is None:
@@ -397,24 +403,20 @@ if __name__ == "__main__":
                 len(ch_replies),
             )
             data_replies = parse_replies(ch_replies, users)
-            sep = "=" * 24
-            data_replies = "%s\n%s\n\n%s" % (header_str, sep, data_replies)
+            data_replies = "%s\n%s\n\n%s" % (header_str, sep_str, data_replies)
         save(data_replies, "channel-replies_%s" % channel_id)
 
     def save_channel(ch_id, ch_list, users):
-        ts_fr = a.fr
-        ts_to = a.to
-        ch_hist = channel_history(ch_id, oldest=ts_fr, latest=ts_to)
+        ch_hist = channel_history(ch_id, oldest=a.fr, latest=a.to)
         if a.json:
             data_ch = ch_hist
         else:
             data_ch = parse_channel_history(ch_hist, users)
             ch_name, ch_type = name_from_ch_id(ch_id, ch_list)
             header_str = "%s Name: %s" % (ch_type, ch_name)
-            sep = "=" * 24
             data_ch = (
                 "Channel ID: %s\n%s\n%s Messages\n%s\n\n"
-                % (ch_id, header_str, len(ch_hist), sep)
+                % (ch_id, header_str, len(ch_hist), sep_str)
                 + data_ch
             )
         save(data_ch, "channel_%s" % ch_id)
@@ -432,7 +434,11 @@ if __name__ == "__main__":
         data = user_list() if a.json else parse_user_list(user_list())
         save(data, "user_list")
     if a.c:
-        ch_id = a.ch if a.ch else (os.environ["CHANNEL_ID"] if "CHANNEL_ID" in os.environ else None)
+        ch_id = (
+            a.ch
+            if a.ch
+            else (os.environ["CHANNEL_ID"] if "CHANNEL_ID" in os.environ else None)
+        )
         ch_list = channel_list()
         users = user_list()
         if ch_id:
