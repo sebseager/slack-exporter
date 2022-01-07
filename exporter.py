@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import time
 import requests
 import json
 from datetime import datetime
@@ -374,15 +375,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c", action="store_true", help="Get history for all accessible conversations"
     )
-    parser.add_argument("--ch", help="Restrict to given channel ID")
+    parser.add_argument("--ch", help="With -c, restrict export to given channel ID")
     parser.add_argument(
         "--fr",
-        help="Unix timestamp (seconds since Jan. 1, 1970) for earliest message",
+        help="With -c, Unix timestamp (seconds since Jan. 1, 1970) for earliest message",
         type=str,
     )
     parser.add_argument(
         "--to",
-        help="Unix timestamp (seconds since Jan. 1, 1970) for latest message",
+        help="With -c, Unix timestamp (seconds since Jan. 1, 1970) for latest message",
         type=str,
     )
     parser.add_argument(
