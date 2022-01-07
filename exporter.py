@@ -206,8 +206,20 @@ def parse_channel_list(channels, users):
 
 def name_from_uid(user_id, users, real=False):
     for user in users:
-        if user["id"] == user_id:
-            return user["real_name"] if real else user["name"]
+        if user["id"] != user_id:
+            continue
+
+        if real:
+            try:
+                return user["profile"]["real_name"]
+            except KeyError:
+                try:
+                    return user["profile"]["display_name"]
+                except KeyError:
+                    return "[no full name]"
+        else:
+            return user["name"]
+
     return "[null user]"
 
 
@@ -226,12 +238,21 @@ def parse_user_list(users):
     result = ""
     for u in users:
         entry = "[%s]" % u["id"]
-        if "name" in u:
+
+        try:
             entry += " %s" % u["name"]
-        if "real_name" in u:
-            entry += " (%s)" % u["real_name"]
-        if "tz" in u:
+        except KeyError:
+            pass
+
+        try:
+            entry += " (%s)" % u["profile"]["real_name"]
+        except KeyError:
+            pass
+
+        try:
             entry += ", %s" % u["tz"]
+        except KeyError:
+            pass
 
         u_type = ""
         if "is_admin" in u and u["is_admin"]:
@@ -248,7 +269,10 @@ def parse_user_list(users):
             u_type += "bot|"
         if "is_app_user" in u and u["is_app_user"]:
             u_type += "app_user|"
-        u_type = u_type[:-1] if u_type.endswith("|") else u_type
+
+        if u_type.endswith("|"):
+            u_type = u_type[:-1]
+
         entry += ", " if u_type.strip() != "" else ""
         entry += "%s\n" % u_type
         result += entry
@@ -266,7 +290,7 @@ def parse_channel_history(msgs, users, check_thread=False):
         if "user" in msg:
             usr = {
                 "name": name_from_uid(msg["user"], users),
-                "real_name": name_from_uid(msg["user"], users, True),
+                "real_name": name_from_uid(msg["user"], users, real=True),
             }
         else:
             usr = {"name": "", "real_name": "none"}
