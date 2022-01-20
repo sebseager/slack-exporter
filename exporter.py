@@ -7,6 +7,10 @@ import json
 from datetime import datetime
 import argparse
 from dotenv import load_dotenv
+from time import sleep
+
+# when throtthled, add this to the wait time
+ADDITIONAL_SLEEP_TIME = 10
 
 env_file = os.path.join(os.path.dirname(__file__), ".env")
 if os.path.isfile(env_file):
@@ -29,6 +33,36 @@ def handle_print(text, response_url=None):
     else:
         post_response(response_url, text)
 
+# slack api (OAuth 2.0) now requires auth tokens in HTTP Authorization header
+# instead of passing it as a query parameter
+try:
+    HEADERS = {"Authorization": "Bearer %s" % os.environ["SLACK_USER_TOKEN"]}
+except KeyError:
+    handle_print("Missing SLACK_USER_TOKEN in environment variables", response_url)
+    sys.exit(1)
+
+def _get_data(url, params):
+    return requests.get(url, headers=HEADERS, params=params)
+
+def get_data(url, params):
+    """Naively deals with throttling"""
+
+    # success means "not_throthled", it can still end up with error
+    success = False
+    attempt = 0
+
+    while not success:
+        r = _get_data(url, params)
+        attempt += 1
+
+        if r.status_code != 429:
+            success = True
+        else:
+            retry_after = int(r.headers["Retry-After"])  # seconds to wait
+            sleep_time = retry_after + ADDITIONAL_SLEEP_TIME
+            print(f"Got throttled for {retry_after} seconds ({attempt}x). Sleeping for {sleep_time}")
+            sleep(sleep_time)
+    return r
 
 # pagination handling
 
@@ -37,15 +71,7 @@ def get_at_cursor(url, params, cursor=None, response_url=None):
     if cursor is not None:
         params["cursor"] = cursor
 
-    # slack api (OAuth 2.0) now requires auth tokens in HTTP Authorization header
-    # instead of passing it as a query parameter
-    try:
-        headers = {"Authorization": "Bearer %s" % os.environ["SLACK_USER_TOKEN"]}
-    except KeyError:
-        handle_print("Missing SLACK_USER_TOKEN in environment variables", response_url)
-        sys.exit(1)
-
-    r = requests.get(url, headers=headers, params=params)
+    r = get_data(url, params)
 
     if r.status_code != 200:
         handle_print("ERROR: %s %s" % (r.status_code, r.reason), response_url)
