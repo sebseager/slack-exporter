@@ -33,6 +33,7 @@ def handle_print(text, response_url=None):
     else:
         post_response(response_url, text)
 
+
 # slack api (OAuth 2.0) now requires auth tokens in HTTP Authorization header
 # instead of passing it as a query parameter
 try:
@@ -41,8 +42,10 @@ except KeyError:
     handle_print("Missing SLACK_USER_TOKEN in environment variables", response_url)
     sys.exit(1)
 
+
 def _get_data(url, params):
     return requests.get(url, headers=HEADERS, params=params)
+
 
 def get_data(url, params):
     """Naively deals with throttling"""
@@ -60,9 +63,12 @@ def get_data(url, params):
         else:
             retry_after = int(r.headers["Retry-After"])  # seconds to wait
             sleep_time = retry_after + ADDITIONAL_SLEEP_TIME
-            print(f"Got throttled for {retry_after} seconds ({attempt}x). Sleeping for {sleep_time}")
+            print(
+                f"Got throttled for {retry_after} seconds ({attempt}x). Sleeping for {sleep_time}"
+            )
             sleep(sleep_time)
     return r
+
 
 # pagination handling
 
