@@ -9,8 +9,8 @@ import argparse
 from dotenv import load_dotenv
 from time import sleep
 
-# when throtthled, add this to the wait time
-ADDITIONAL_SLEEP_TIME = 10
+# when rate-limited, add this to the wait time
+ADDITIONAL_SLEEP_TIME = 2
 
 env_file = os.path.join(os.path.dirname(__file__), ".env")
 if os.path.isfile(env_file):
@@ -48,9 +48,9 @@ def _get_data(url, params):
 
 
 def get_data(url, params):
-    """Naively deals with throttling"""
+    """Naively deals with rate-limiting"""
 
-    # success means "not_throthled", it can still end up with error
+    # success means "not rate-limited", it can still end up with error
     success = False
     attempt = 0
 
@@ -63,9 +63,7 @@ def get_data(url, params):
         else:
             retry_after = int(r.headers["Retry-After"])  # seconds to wait
             sleep_time = retry_after + ADDITIONAL_SLEEP_TIME
-            print(
-                f"Got throttled for {retry_after} seconds ({attempt}x). Sleeping for {sleep_time}"
-            )
+            print(f"Rate-limited. Retrying after {sleep_time} seconds ({attempt}x).")
             sleep(sleep_time)
     return r
 
