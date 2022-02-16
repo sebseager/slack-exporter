@@ -444,14 +444,13 @@ if __name__ == "__main__":
                 else:
                     f.write(data)
 
-    def save_replies(channel_hist, channel_id, users):
-        ch_replies = channel_replies(
-            [x["ts"] for x in channel_hist if "reply_count" in x], channel_id
-        )
+    def save_replies(channel_hist, channel_id, channel_list, users):
+        reply_timestamps = [x["ts"] for x in channel_hist if "reply_count" in x]
+        ch_replies = channel_replies(reply_timestamps, channel_id)
         if a.json:
             data_replies = ch_replies
         else:
-            ch_name, ch_type = name_from_ch_id(ch_id, ch_list)
+            ch_name, ch_type = name_from_ch_id(channel_id, channel_list)
             header_str = "Threads in %s: %s\n%s Messages" % (
                 ch_type,
                 ch_name,
@@ -461,37 +460,35 @@ if __name__ == "__main__":
             data_replies = "%s\n%s\n\n%s" % (header_str, sep_str, data_replies)
         save(data_replies, "channel-replies_%s" % channel_id)
 
-    def save_channel(ch_id, ch_list, users):
-        ch_hist = channel_history(ch_id, oldest=a.fr, latest=a.to)
+    def save_channel(channel_id, channel_list, users):
+        ch_hist = channel_history(channel_id, oldest=a.fr, latest=a.to)
         if a.json:
             data_ch = ch_hist
         else:
             data_ch = parse_channel_history(ch_hist, users)
-            ch_name, ch_type = name_from_ch_id(ch_id, ch_list)
+            ch_name, ch_type = name_from_ch_id(channel_id, channel_list)
             header_str = "%s Name: %s" % (ch_type, ch_name)
             data_ch = (
                 "Channel ID: %s\n%s\n%s Messages\n%s\n\n"
-                % (ch_id, header_str, len(ch_hist), sep_str)
+                % (channel_id, header_str, len(ch_hist), sep_str)
                 + data_ch
             )
-        save(data_ch, "channel_%s" % ch_id)
+        save(data_ch, "channel_%s" % channel_id)
         if a.r:
-            save_replies(ch_hist, ch_id, users)
+            save_replies(ch_hist, channel_id, channel_list, users)
+
+    ch_list = channel_list()
+    user_list = user_list()
 
     if a.lc:
-        data = (
-            channel_list()
-            if a.json
-            else parse_channel_list(channel_list(), user_list())
-        )
+        data = ch_list if a.json else parse_channel_list(ch_list, user_list)
         save(data, "channel_list")
     if a.lu:
-        data = user_list() if a.json else parse_user_list(user_list())
+        data = user_list if a.json else parse_user_list(user_list)
         save(data, "user_list")
     if a.c:
         ch_id = a.ch
-        ch_list = channel_list()
-        users = user_list()
+        users = user_list
         if ch_id:
             save_channel(ch_id, ch_list, users)
         else:
@@ -500,4 +497,4 @@ if __name__ == "__main__":
     # elif, since we want to avoid asking for channel_history twice
     elif a.r:
         for ch_id in [x["id"] for x in channel_list()]:
-            save_replies(channel_history(ch_id), ch_id, user_list())
+            save_replies(channel_history(ch_id), ch_id, ch_list, user_list)
