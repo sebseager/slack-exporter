@@ -428,7 +428,7 @@ if __name__ == "__main__":
 
     def save(data, filename):
         if a.o is None:
-            print(data)
+            json.dump(data, sys.stdout, indent=4)
         else:
             out_dir_parent = os.path.abspath(
                 os.path.expanduser(os.path.expandvars(a.o))
