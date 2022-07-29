@@ -493,7 +493,7 @@ if __name__ == "__main__":
         else:
             for ch_id in [x["id"] for x in ch_list]:
                 ch_hist = channel_history(ch_id, oldest=a.fr, latest=a.to)
-                save_channel(ch_hist, ch_id, ch_list, users)
+                save_channel(ch_hist, ch_id, ch_list, user_list)
     # elif, since we want to avoid asking for channel_history twice
     elif a.r:
         for ch_id in [x["id"] for x in channel_list()]:
