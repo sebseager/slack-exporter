@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import sys
-import time
 import requests
 import json
 from datetime import datetime
@@ -113,7 +112,7 @@ def paginated_get(url, params, combine_key=None, response_url=None):
             result.extend(data) if combine_key is None else result.extend(
                 data[combine_key]
             )
-        except KeyError:
+        except KeyError as e:
             handle_print("Something went wrong: %s." % e, response_url)
             sys.exit(1)
 
