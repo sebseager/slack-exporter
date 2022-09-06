@@ -35,6 +35,7 @@ oauth_config:
       - im:read
       - im:history
       - users:read
+      - files:read
     bot:
       - commands
       - chat:write
