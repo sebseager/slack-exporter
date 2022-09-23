@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
 import sys
-import time
 import requests
 import json
+from timeit import default_timer
 from datetime import datetime
 import argparse
 from dotenv import load_dotenv
@@ -113,7 +113,7 @@ def paginated_get(url, params, combine_key=None, response_url=None):
             result.extend(data) if combine_key is None else result.extend(
                 data[combine_key]
             )
-        except KeyError:
+        except KeyError as e:
             handle_print("Something went wrong: %s." % e, response_url)
             sys.exit(1)
 
@@ -140,6 +140,18 @@ def channel_list(team_id=None, response_url=None):
         combine_key="channels",
         response_url=response_url,
     )
+
+
+def get_file_list():
+    current_page = 1
+    total_pages = 1
+    while current_page <= total_pages:
+        response = get_data("https://slack.com/api/files.list", params={"page": current_page})
+        json_data = response.json()
+        total_pages = json_data["paging"]["pages"]
+        for file in json_data["files"]:
+            yield file
+        current_page += 1
 
 
 def channel_history(channel_id, response_url=None, oldest=None, latest=None):
@@ -385,6 +397,25 @@ def parse_replies(threads, users):
     return body
 
 
+def save_files(out_dir):
+    total = 0
+    start = default_timer()
+    for file_info in get_file_list():
+        url = file_info["url_private"]
+        destination_filename = "{id}-{name}".format(**file_info)
+        files_dir = os.path.join(out_dir, "files")
+        os.makedirs(files_dir, exist_ok=True)
+        destination_path = os.path.join(files_dir, destination_filename)
+        print("Downloading file to %s" % destination_path)
+        response = requests.get(url, headers=HEADERS)
+        with open(destination_path, "wb") as fh:
+            fh.write(response.content)
+        total += 1
+    end = default_timer()
+    seconds = int(end - start)
+    print("Downloaded %i files in %i seconds" % (total, seconds))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -421,19 +452,29 @@ if __name__ == "__main__":
         action="store_true",
         help="Get reply threads for all accessible conversations",
     )
+    parser.add_argument(
+        "--files",
+        action="store_true",
+        help="Also download all files",
+    )
 
     a = parser.parse_args()
     ts = str(datetime.strftime(datetime.now(), "%m-%d-%Y_%H%M%S"))
     sep_str = "*" * 24
 
+    if a.files and a.o is None:
+        print("If you specify --files you also need to specify an output directory with -o")
+        sys.exit(1)
+
+    out_dir_parent = os.path.abspath(
+        os.path.expanduser(os.path.expandvars(a.o))
+    )
+    out_dir = os.path.join(out_dir_parent, "slack_export_%s" % ts)
+
     def save(data, filename):
         if a.o is None:
             json.dump(data, sys.stdout, indent=4)
         else:
-            out_dir_parent = os.path.abspath(
-                os.path.expanduser(os.path.expandvars(a.o))
-            )
-            out_dir = os.path.join(out_dir_parent, "slack_export_%s" % ts)
             filename = filename + ".json" if a.json else filename + ".txt"
             os.makedirs(out_dir, exist_ok=True)
             full_filepath = os.path.join(out_dir, filename)
@@ -499,3 +540,6 @@ if __name__ == "__main__":
         for ch_id in [x["id"] for x in channel_list()]:
             ch_hist = channel_history(ch_id, oldest=a.fr, latest=a.to)
             save_replies(ch_hist, ch_id, ch_list, user_list)
+
+    if a.files and a.o is not None:
+        save_files(out_dir)
