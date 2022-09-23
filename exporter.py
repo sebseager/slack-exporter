@@ -455,21 +455,22 @@ if __name__ == "__main__":
     parser.add_argument(
         "--files",
         action="store_true",
-        help="Also download all files",
+        help="Download all files",
     )
 
     a = parser.parse_args()
     ts = str(datetime.strftime(datetime.now(), "%m-%d-%Y_%H%M%S"))
     sep_str = "*" * 24
 
-    if a.files and a.o is None:
+    if a.o is None and a.files:
         print("If you specify --files you also need to specify an output directory with -o")
         sys.exit(1)
-
-    out_dir_parent = os.path.abspath(
-        os.path.expanduser(os.path.expandvars(a.o))
-    )
-    out_dir = os.path.join(out_dir_parent, "slack_export_%s" % ts)
+        
+    if a.o is not None:
+        out_dir_parent = os.path.abspath(
+            os.path.expanduser(os.path.expandvars(a.o))
+        )
+        out_dir = os.path.join(out_dir_parent, "slack_export_%s" % ts)
 
     def save(data, filename):
         if a.o is None:
