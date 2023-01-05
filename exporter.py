@@ -7,6 +7,7 @@ from timeit import default_timer
 from datetime import datetime
 import argparse
 from dotenv import load_dotenv
+from pathvalidate import sanitize_filename
 from time import sleep
 
 # when rate-limited, add this to the wait time
@@ -402,6 +403,7 @@ def save_files(out_dir):
     start = default_timer()
     for file_info in get_file_list():
         url = file_info["url_private"]
+        file_info["name"] = sanitize_filename(file_info["name"])
         destination_filename = "{id}-{name}".format(**file_info)
         files_dir = os.path.join(out_dir, "files")
         os.makedirs(files_dir, exist_ok=True)
@@ -465,7 +467,7 @@ if __name__ == "__main__":
     if a.o is None and a.files:
         print("If you specify --files you also need to specify an output directory with -o")
         sys.exit(1)
-        
+
     if a.o is not None:
         out_dir_parent = os.path.abspath(
             os.path.expanduser(os.path.expandvars(a.o))
