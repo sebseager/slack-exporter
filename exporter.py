@@ -398,21 +398,44 @@ def parse_replies(threads, users):
     return body
 
 
-def save_files(out_dir):
+def download_file(destination_path, url, attempt = 0):
+    if os.path.exists(destination_path):
+        print("Skipping existing %s" % destination_path)
+        return True
+
+    print(f"Downloading file on attempt {attempt} to {destination_path}")
+        
+    try:
+        response = requests.get(url, headers=HEADERS)
+        with open(destination_path, "wb") as fh:
+            fh.write(response.content)
+    except Exception as err:
+        print(f"Unexpected error on {destination_path} attempt {attempt}; {err=}, {type(err)=}")
+        return False
+    else:
+        return True
+
+def save_files(file_dir):
     total = 0
     start = default_timer()
     for file_info in get_file_list():
         url = file_info["url_private"]
         file_info["name"] = sanitize_filename(file_info["name"])
         destination_filename = "{id}-{name}".format(**file_info)
-        files_dir = os.path.join(out_dir, "files")
-        os.makedirs(files_dir, exist_ok=True)
-        destination_path = os.path.join(files_dir, destination_filename)
-        print("Downloading file to %s" % destination_path)
-        response = requests.get(url, headers=HEADERS)
-        with open(destination_path, "wb") as fh:
-            fh.write(response.content)
+        os.makedirs(file_dir, exist_ok=True)
+        destination_path = os.path.join(file_dir, destination_filename)
+
+        download_success = False
+        attempt = 1
+        while not download_success and attempt <= 10:
+           download_success = download_file(destination_path, url, attempt)
+           attempt += 1
+
+        if not download_success:
+            raise Exception("Failed to download from {url} after {attempt} tries")
+
         total += 1
+
     end = default_timer()
     seconds = int(end - start)
     print("Downloaded %i files in %i seconds" % (total, seconds))
