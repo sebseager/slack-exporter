@@ -505,7 +505,7 @@ if __name__ == "__main__":
             os.makedirs(out_dir, exist_ok=True)
             full_filepath = os.path.join(out_dir, filename)
             print("Writing output to %s" % full_filepath)
-            with open(full_filepath, mode="w") as f:
+            with open(full_filepath, mode="w", encoding="utf-8") as f:
                 if a.json:
                     json.dump(data, f, indent=4)
                 else:
