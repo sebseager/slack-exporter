@@ -340,7 +340,7 @@ def parse_channel_history(msgs, users, check_thread=False):
             usr = {"name": "", "real_name": "none"}
 
         timestamp = datetime.fromtimestamp(round(float(msg["ts"]))).strftime(
-            "%m-%d-%y %H:%M:%S"
+            "%Y-%m-%d %H:%M:%S"
         )
         text = msg["text"] if msg["text"].strip() != "" else "[no message content]"
         for u in [x["id"] for x in users]:
@@ -484,7 +484,7 @@ if __name__ == "__main__":
     )
 
     a = parser.parse_args()
-    ts = str(datetime.strftime(datetime.now(), "%m-%d-%Y_%H%M%S"))
+    ts = str(datetime.strftime(datetime.now(), "%Y-%m-%d_%H%M%S"))
     sep_str = "*" * 24
 
     if a.o is None and a.files:
