@@ -9,8 +9,8 @@ A similar service is provided by Slack for workspace admins at [https://my.slack
 There are two ways to use `slack-exporter` (detailed below). Both require a Slack API token to be able to communicate with your workspace.
 
 1. Visit [https://api.slack.com/apps/](https://api.slack.com/apps/) and sign in to your workspace.
-2. Click `Create New App`. If prompted to select "how you’d like to configure your app’s scopes", choose the "app manifest option" (you will otherwise be prompted to enter an app name and may need to go through more steps to set up permissions instead of the short way in step 3), then select your workspace.
-3. You should then be prompted for an App Manifest; paste the contents of the `slack.yaml` file (in the root of this repo) into the YAML box.
+2. Click `Create New App`. If prompted to select "how you'd like to configure your app's scopes", choose the `App Manifest` option. You can configure the app manually instead, but you will be prompted to enter an app name and additional steps to set up permissions instead of the single step below. Once creates, select your workspace.
+3. You should then be prompted for an app manifest. Paste the contents of the `slack.yaml` file (in the root of this repo) into the YAML box.
 4. Select `Install to Workspace` at the top of that page (or `Reinstall to Workspace` if you have done this previously) and accept at the prompt.
 5. Copy the `OAuth Access Token` (which will generally start with `xoxp` for user-level permissions and may be located in a section like "OAuth & Permissions" in the sidebar).
 
@@ -32,8 +32,8 @@ There are two ways to use `slack-exporter` (detailed below). Both require a Slac
     export SLACK_USER_TOKEN=xoxp-xxxxxxxxxxxxx...
     ```
 
-2. If you cloned this repository, make sure that dependencies are installed by running `pip install -r requirements.txt` in the directory.
-3. Run `python exporter.py --help` to view the available export options. You can test that access is working by listing the available conversations: `python exporter.py --lc`.
+2. If you cloned this repo, make sure that dependencies are installed by running `pip install -r requirements.txt` in the repo root directory.
+3. Run `python exporter.py --help` to view the available export options. You can test that access to Slack is working by listing available conversations: `python exporter.py --lc`.
 
 ### As a Slack bot
 
